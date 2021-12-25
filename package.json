@@ -1,0 +1,21 @@
+{
+  "name": "pro-firebird-write-block-module-direction-in-db",
+  "version": "1.0.0",
+  "description": "App to complete block, module, direction in DB automatically",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Yurii Litovinskyi",
+  "license": "ISC",
+  "keywords": [
+    "js",
+    "firebird"
+  ],
+  "dependencies": {
+    "chalk": "^4.0.0",
+    "node-firebird": "^1.0.0",
+    "prompt-confirm": "^2.0.4"
+  }
+}
