@@ -34,10 +34,22 @@ question.ask(async function(answer){
             console.log(chalk.yellow(' Connected to DB successfully! \n'))
         
             const R1000Ids = await findR1000Id(db)
+
+            if(!R1000Ids.length) {
+                console.log(chalk.grey('\n No R1000 found! Application will be closed in 5 seconds'))
+                db.detach()
+                await sleep(5000)
+            }
             
             const ids = await extractIdsFromArrayOfObjects(R1000Ids)
             
-            const ppks =  await findPpksAndIds(db, ids)            
+            const ppks =  await findPpksAndIds(db, ids)
+            
+            if(!ppks.length) {
+                console.log(chalk.grey('\n No PPK found! Application will be closed in 5 seconds'))
+                db.detach()
+                await sleep(5000)
+            }
 
             const res = await insertBlockModDir(db, ppks)
                         
