@@ -3,6 +3,7 @@ const Confirm = require('prompt-confirm')
 const chalk = require('chalk')
 const PpkBlModDirClass = require('./PpkBlModDirClass')
 
+const version = '2.0'
 
 const question = new Confirm (chalk.red('\n Do you really want to fill Block/Module/Direction in Dunay DB automatically?'))
 
@@ -31,15 +32,20 @@ question.ask(async function(answer){
                 throw err
             }           
 
+            console.log(chalk.yellow(` Program version: ${version}  \n`))
             console.log(chalk.yellow(' Connected to DB successfully! \n'))
-        
+                                
             const R1000Ids = await findR1000Id(db)
-
+            
             if(!R1000Ids.length) {
                 console.log(chalk.grey('\n No R1000 found! Application will be closed in 5 seconds'))
                 db.detach()
                 await sleep(5000)
             }
+            
+            /* next function is neded to bypass the trigger named 'TR_ATU_DNBR1000_ROUTE_BU',
+            which is raising exeption when there are two or more identical 'PARENT_ID's in 'ATU_DNBR1000_ROUTE' table */
+            await clearBlockModuleDirectionParentId(db)
             
             const ids = await extractIdsFromArrayOfObjects(R1000Ids)
             
@@ -49,9 +55,9 @@ question.ask(async function(answer){
                 console.log(chalk.grey('\n No PPK found! Application will be closed in 5 seconds'))
                 db.detach()
                 await sleep(5000)
-            }
+            }           
 
-            const res = await insertBlockModDir(db, ppks)
+            await insertBlockModDir(db, ppks)
                         
             db.detach()
 
@@ -86,6 +92,7 @@ function findR1000Id(db){
     })
 }
 
+
 // Find all ppks according to parent (R1000) Ids
 //  @table:        'OBJECTS'
 function findPpksAndIds(db, R1000Ids){
@@ -102,6 +109,7 @@ function findPpksAndIds(db, R1000Ids){
         })
     })   
 }
+
 
 // Insert Block/Module/Direction for every PPK
 //  @table:        'ATU_DNBR1000_ROUTE'
@@ -131,6 +139,26 @@ function insertBlockModDir(db, ids){
         resolve('ok')     
     })
 }
+
+
+// Set Block/Module/Direction to 0 and PARENT_ID to NULL for every PPK
+//  @table:        'ATU_DNBR1000_ROUTE'
+function clearBlockModuleDirectionParentId(db){
+    return new Promise((resolve, reject) => {
+        const query = 'UPDATE atu_dnbr1000_route SET BLOCK_OID = 0, MODULE_OID = 0, DIRECTION_OID = 0, FIRST_PORT = 0, PARENT_ID = NULL;'
+
+        db.query(query, async function(err, result){
+            if(err){
+                console.log(chalk.red(`\n Error! Could not set Block/Module/Direction to 0/0/0 and parent id to NULL in database!`))  
+                throw err
+            }
+
+            console.log(chalk.yellow(` Setting Block/Module/Direction to 0/0/0 and parent id to NULL for all ppks... \n`))
+        })
+        resolve('ok') 
+    })
+}
+
 
 function extractIdsFromArrayOfObjects(array){
     return new Promise((resolve, reject) => {
